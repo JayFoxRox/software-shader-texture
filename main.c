@@ -318,6 +318,8 @@ void main() {
 )GLSL"
   };
 
+  //FIXME: Check if this has any impact on any GPU
+  glHint(GL_FRAGMENT_SHADER_DERIVATIVE_HINT, GL_NICEST);
   
   GLuint program = glCreateProgram();
   GLuint vs = glCreateShader(GL_VERTEX_SHADER);
