@@ -211,10 +211,13 @@ vec4 sw_texture_nearest_lod(sampler2D sampler, vec2 P, int lod) {
   return texelFetchOffset_Wrap(sampler, i, lod, ivec2(0, 0));
 }
 
-vec2 reduce2(vec2 value, uint bits) {
-  uint bits_max = (1u << bits) - 1;
-  return round(value * bits_max) / bits_max;
-}
+#define REDUCE(type, name) \
+  type name(type value, uint bits) { \
+    uint bits_max = (1u << bits) - 1; \
+    return round(value * bits_max) / bits_max; \
+  }
+REDUCE(vec2, reduce2)
+REDUCE(vec4, reduce4)
 
 vec4 sw_texture_linear_lod(sampler2D sampler, vec2 P, int lod) {
   ivec2 s = textureSize(sampler, lod);
