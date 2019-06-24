@@ -1,5 +1,6 @@
 // This code often cites https://www.khronos.org/registry/OpenGL/specs/gl/glspec20.pdf
 // It is written based on https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/textureQueryLod.xhtml
+//FIXME: Add https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_texture_filter_anisotropic.txt
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
