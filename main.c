@@ -53,7 +53,7 @@ int main() {
   printf("GL_VERSION: %s\n", glGetString(GL_VERSION));
   printf("\n");
 
-  const unsigned int width = 1024;
+  const unsigned int width = 2;
   const unsigned int height = width;
   uint32_t* pixels = malloc(width * height * 4);
   for(int y = 0; y < height; y++) {
@@ -62,7 +62,7 @@ int main() {
       color = 0x00000000 | (x << 16) | (y << 8);
 
       //FIXME: Checkerboard is interesting to see interpolation
-      color = ((x + (y & 8)) & 8) ? 0xFFFFFFFF : 0xFF0000FF;
+      color = ((x + (y & 1)) & 1) ? 0xFFFFFFFF : 0xFF0000FF;
 
       pixels[y * width + x] = color;
     }
@@ -211,11 +211,18 @@ vec4 sw_texture_nearest_lod(sampler2D sampler, vec2 P, int lod) {
   return texelFetchOffset_Wrap(sampler, i, lod, ivec2(0, 0));
 }
 
+vec2 reduce2(vec2 value, uint bits) {
+  uint bits_max = (1u << bits) - 1;
+  return round(value * bits_max) / bits_max;
+}
+
 vec4 sw_texture_linear_lod(sampler2D sampler, vec2 P, int lod) {
   ivec2 s = textureSize(sampler, lod);
   vec2 t = s + P * s - 0.5;
   ivec2 i = ivec2(t);
   vec2 f = fract(t);
+
+  f = reduce2(f, 3u);
 
   vec4 v00 = texelFetchOffset_Wrap(sampler, i, lod, ivec2(0, 0));
   vec4 v10 = texelFetchOffset_Wrap(sampler, i, lod, ivec2(1, 0));
