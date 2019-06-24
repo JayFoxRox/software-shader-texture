@@ -297,11 +297,17 @@ vec4 sw_texture(sampler2D sampler, vec2 P) {
     return sw_texture_nearest(sampler, P);
   } else if (chosen_filter == LINEAR) {
     return sw_texture_linear(sampler, P);
+  } else if (chosen_filter == NEAREST_MIPMAP_NEAREST) {
+    return sw_texture_nearest_mipmap_nearest(sampler, P);
+  } else if (chosen_filter == LINEAR_MIPMAP_NEAREST) {
+    return sw_texture_linear_mipmap_nearest(sampler, P);
+  } else if (chosen_filter == NEAREST_MIPMAP_LINEAR) {
+    return sw_texture_nearest_mipmap_linear(sampler, P);
   } else if (chosen_filter == LINEAR_MIPMAP_LINEAR) {
     return sw_texture_linear_mipmap_linear(sampler, P);
   } else {
     //FIXME: Add other filters
-    return vec4(1.0, 0.0, 0.0, 1.0);
+    return vec4(0.8, 0.2, 0.8, 1.0);
   }
 }
 
