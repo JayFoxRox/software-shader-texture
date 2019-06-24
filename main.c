@@ -205,7 +205,7 @@ vec4 texelFetchOffset_Wrap(sampler2D sampler, ivec2 P, int lod, ivec2 offset) {
 
 vec4 sw_texture_nearest_lod(sampler2D sampler, vec2 P, int lod) {
   ivec2 s = textureSize(sampler, lod);
-  vec2 t = s + P * (s - 1) + 0.5;
+  vec2 t = s + P * s;
   ivec2 i = ivec2(t);
 
   return texelFetchOffset_Wrap(sampler, i, lod, ivec2(0, 0));
