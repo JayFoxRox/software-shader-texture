@@ -58,7 +58,7 @@ int main() {
   printf("GL_VERSION: %s\n", glGetString(GL_VERSION));
   printf("\n");
 
-  const unsigned int width = 2;
+  const unsigned int width = 16;
   const unsigned int height = width;
   uint32_t* pixels = malloc(width * height * 4);
   for(int y = 0; y < height; y++) {
@@ -67,7 +67,14 @@ int main() {
       color = 0x00000000 | (x << 16) | (y << 8);
 
       //FIXME: Checkerboard is interesting to see interpolation
-      color = ((x + (y & 1)) & 1) ? 0xFFFFFFFF : 0xFF0000FF;
+      color = ((x + (y & 4)) & 4) ? 0xFFFFFFFF : 0xFF0000FF;
+
+      bool hit = false;
+      hit |= ((x == 3) && (y == 10));
+      hit |= ((x == 11) && (y == 10));
+      hit |= ((x == 11) && (y == 5));
+
+      color = hit ? 0xFFFFFFFF : 0x00;
 
       pixels[y * width + x] = color;
     }
