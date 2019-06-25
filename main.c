@@ -382,12 +382,14 @@ vec4 sw_texture(sampler2D sampler, vec2 P) {
 void main() {
   vec2 uv = gl_FragCoord.xy;
 
-  vec4 color = sw_texture(pixels, g_uv);
-  //color = vec4(sw_textureQueryLod_polygon(pixels, g_uv).y / 5.0);
+  vec4 color;
 
   if (hw) { // || gl_FragCoord.x > 320) {
     color = texture(pixels, g_uv);
     //color = vec4(textureQueryLod(pixels, g_uv).y / 5.0);
+  } else {
+    color = sw_texture(pixels, g_uv);
+    //color = vec4(sw_textureQueryLod_polygon(pixels, g_uv).y / 5.0);
   }
 
   gl_FragColor = color;
