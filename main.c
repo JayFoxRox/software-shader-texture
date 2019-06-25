@@ -422,17 +422,19 @@ void main() {
 
   float w = 1.0f;
   float zn = 1.0f;
-  float zf = zn;
+  float zf = -1.0;
 
   typedef struct {
     float x, y, z, w;
     float u, v;
   } Vertex;
+  float lrb = 1.0f;
+  float lrt = 1.0f;
   Vertex vertices[4] = {
-    { -0.9f, -1.0f, zn, w, 0.0f, 0.0f },
-    {  0.9f, -1.0f, zn, w, 1.0f, 0.0f },
-    { -0.3f,  1.0f, zf, w, 0.0f, 1.0f },
-    {  0.3f,  1.0f, zf, w, 1.0f, 1.0f }
+    { -lrb, -1.0f, zn, w, 0.0f, 0.0f },
+    {  lrb, -1.0f, zn, w, 1.0f, 0.0f },
+    { -lrt,  1.0f, zf, w, 0.0f, 1.0f },
+    {  lrt,  1.0f, zf, w, 1.0f, 1.0f }
   };
 
   GLint vao;
