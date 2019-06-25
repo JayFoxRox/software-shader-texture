@@ -14,6 +14,10 @@
 unsigned int min_filter;
 unsigned int mag_filter;
 
+//FIXME: Must match stuff in shader
+#define CONVOLUTION_QUINCUNX_NVIDIA 1
+#define CONVOLUTION_GAUSSIAN_3_NVIDIA 2
+
 void APIENTRY DebugCallbackGL(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam) {
   fprintf(stderr, "DebugCallbackGL: %s\n", message);
 }
@@ -110,6 +114,10 @@ uniform bool hw;
 #define NEAREST_MIPMAP_LINEAR		0x2702
 #define LINEAR_MIPMAP_NEAREST		0x2701
 #define LINEAR_MIPMAP_LINEAR			0x2703
+
+// Extensions for original Xbox GPU:
+#define CONVOLUTION_QUINCUNX_NVIDIA 1
+#define CONVOLUTION_GAUSSIAN_3_NVIDIA 2
 
 uniform uint TEXTURE_MIN_FILTER;
 uniform uint TEXTURE_MAG_FILTER;
@@ -288,6 +296,53 @@ vec4 sw_texture_linear_mipmap_linear(sampler2D sampler, vec2 P) {
   return mix(v0, v1, lod_f);
 }
 
+vec4 sw_texture_convolution_kernel_nvidia(sampler2D sampler, vec2 P, mat3 kernel) {
+  int lod = 0;
+  ivec2 s = textureSize(sampler, lod);
+  vec2 t = s + P * s;
+
+  ivec2 i = ivec2(t - 1);
+
+  vec4 v00 = texelFetchOffset_Wrap(sampler, i, lod, ivec2(0, 0)) * kernel[0][0];
+  vec4 v10 = texelFetchOffset_Wrap(sampler, i, lod, ivec2(1, 0)) * kernel[0][1];
+  vec4 v20 = texelFetchOffset_Wrap(sampler, i, lod, ivec2(2, 0)) * kernel[0][2];
+
+  vec4 v01 = texelFetchOffset_Wrap(sampler, i, lod, ivec2(0, 1)) * kernel[1][0];
+  vec4 v11 = texelFetchOffset_Wrap(sampler, i, lod, ivec2(1, 1)) * kernel[1][1];
+  vec4 v21 = texelFetchOffset_Wrap(sampler, i, lod, ivec2(2, 1)) * kernel[1][2];
+
+  vec4 v02 = texelFetchOffset_Wrap(sampler, i, lod, ivec2(0, 2)) * kernel[2][0];
+  vec4 v12 = texelFetchOffset_Wrap(sampler, i, lod, ivec2(1, 2)) * kernel[2][1];
+  vec4 v22 = texelFetchOffset_Wrap(sampler, i, lod, ivec2(2, 2)) * kernel[2][2];
+
+  //FIXME: Interpolation?
+
+  return v00 + v10 + v20 +
+         v01 + v11 + v21 +
+         v02 + v12 + v22;
+}
+
+// Applies a kernel
+vec4 sw_texture_convolution_quincunx_nvidia(sampler2D sampler, vec2 P) {
+  //FIXME: Very unsure about this.. needs better measurements
+  return sw_texture_convolution_kernel_nvidia(sampler, P, mat3(
+    //FIXME: WHAT THE FUCK?!
+    1.0, 0.0, 1.0, //FIXME: If this is really zero, restructure code, so these samples aren't done
+    1.0, 4.0, 1.0,
+    0.0, 0.0, 0.0  //FIXME: If this is really zero, restructure code, so these samples aren't done
+  ) / 8.0);
+}
+
+// Applies a kernel
+vec4 sw_texture_convolution_gaussian_3_nvidia(sampler2D sampler, vec2 P) {
+  return sw_texture_convolution_kernel_nvidia(sampler, P, mat3(
+    //FIXME: Very unsure about this.. needs better measurements
+    1.0, 2.0, 1.0,
+    2.0, 4.0, 2.0,
+    1.0, 2.0, 1.0
+  ) / 16.0);
+}
+
 vec4 sw_texture(sampler2D sampler, vec2 P) {
 
   // If lambda(x, y) is less than or equal  to  the  constantc(described below in section 3.8.9) the texture is said to be magnified; if it is greater, the texture is minified.
@@ -306,6 +361,10 @@ vec4 sw_texture(sampler2D sampler, vec2 P) {
     return sw_texture_nearest_mipmap_linear(sampler, P);
   } else if (chosen_filter == LINEAR_MIPMAP_LINEAR) {
     return sw_texture_linear_mipmap_linear(sampler, P);
+  } else if (chosen_filter == CONVOLUTION_QUINCUNX_NVIDIA) {
+    return sw_texture_convolution_quincunx_nvidia(sampler, P);
+  } else if (chosen_filter == CONVOLUTION_GAUSSIAN_3_NVIDIA) {
+    return sw_texture_convolution_gaussian_3_nvidia(sampler, P);
   } else {
     //FIXME: Add other filters
     return vec4(0.8, 0.2, 0.8, 1.0);
@@ -391,13 +450,15 @@ void main() {
     glfwPollEvents();
     bool hw = (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS);
     bool linear = (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS);
+    bool convolution = (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS);
 
     if (linear) {
 
       //FIXME: GL_LINEAR_MIPMAP_LINEAR
 
-      min_filter = GL_LINEAR_MIPMAP_LINEAR; //GL_LINEAR;
+      min_filter = GL_LINEAR; //GL_NEAREST_MIPMAP_LINEAR; //GL_LINEAR;
       mag_filter = GL_LINEAR;
+
     } else {
       min_filter = GL_NEAREST;
       mag_filter = GL_NEAREST;      
@@ -411,6 +472,12 @@ void main() {
     // Set up texture unit
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, min_filter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, mag_filter);
+
+    // Hack to use convolution
+    if (convolution) {
+      min_filter = CONVOLUTION_GAUSSIAN_3_NVIDIA;
+      mag_filter = CONVOLUTION_GAUSSIAN_3_NVIDIA;
+    }
 
     // Set up the program
     glUseProgram(program);
