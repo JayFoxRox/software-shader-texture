@@ -237,11 +237,12 @@ REDUCE(vec4, reduce4)
 
 vec4 sw_texture_linear_lod(sampler2D sampler, vec2 P, int lod) {
   ivec2 s = textureSize(sampler, lod);
-  vec2 t = s + P * s - 0.5;
-  ivec2 i = ivec2(t);
-  vec2 f = fract(t);
+  vec2 t = s + P * s;
 
-  f = reduce2(f, 3u);
+  ivec2 i = ivec2(t - 0.5);
+
+  //FIXME: Extract interpolation bias from texture coordinate
+  vec2 f = fract(t - 0.5);
 
   vec4 v00 = texelFetchOffset_Wrap(sampler, i, lod, ivec2(0, 0));
   vec4 v10 = texelFetchOffset_Wrap(sampler, i, lod, ivec2(1, 0));
