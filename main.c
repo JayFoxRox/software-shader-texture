@@ -456,6 +456,9 @@ void main() {
   glDisable(GL_CULL_FACE);
   glDisable(GL_DEPTH_TEST);
 
+  GLuint query_id;
+  glGenQueries(1, &query_id);
+
   while(1) {
     glfwPollEvents();
     bool hw = (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS);
@@ -496,8 +499,19 @@ void main() {
     glUniform1ui(glGetUniformLocation(program, "TEXTURE_MAG_FILTER"), mag_filter);
     glUniform1i(glGetUniformLocation(program, "hw"), hw);
 
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glFinish();
+    // Timing
+    glBeginQuery(GL_TIME_ELAPSED, query_id);
+    for(int i = 0; i < 100; i++) {
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    }
+    glFlush();
+    glEndQuery(GL_TIME_ELAPSED);
+    GLuint64 query_result;
+    glGetQueryObjectui64v(query_id, GL_QUERY_RESULT, &query_result);
+
+    printf("Took %llu ms\n", query_result / 1000000ULL);
+
+
     glfwSwapBuffers(window);
   }
 }
